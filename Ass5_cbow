@@ -1,0 +1,74 @@
+# a. Import required libraries
+import numpy as np
+import re
+import tensorflow as tf
+from tensorflow.keras.preprocessing.text import Tokenizer
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Dense, Embedding, Lambda
+import matplotlib.pyplot as plt
+
+
+# b. Data Preparation
+data = """The Continuous Bag of Words is a natural language processing technique 
+to generate word embeddings. Word embeddings are useful for many NLP tasks 
+as they represent semantics and structural connections amongst words in a language."""
+
+# Text cleaning
+sentences = re.sub('[^A-Za-z0-9]+', ' ', data).lower().split()
+
+# Tokenization
+tokenizer = Tokenizer()
+tokenizer.fit_on_texts([data])
+word_to_index = tokenizer.word_index
+index_to_word = tokenizer.index_word
+vocab_size = len(word_to_index) + 1
+
+# Create context-target pairs (window size = 2)
+CONTEXT_SIZE = 2
+contexts, targets = [], []
+
+for i in range(CONTEXT_SIZE, len(sentences) - CONTEXT_SIZE):
+    context = sentences[i - CONTEXT_SIZE:i] + sentences[i + 1:i + CONTEXT_SIZE + 1]
+    target = sentences[i]
+    contexts.append([word_to_index[w] for w in context])
+    targets.append(word_to_index[target])
+
+X = np.array(contexts)
+Y = np.array(targets)
+
+
+# c. Build the CBOW Model
+model = Sequential([
+    Embedding(input_dim=vocab_size, output_dim=10, input_length=CONTEXT_SIZE * 2),
+    Lambda(lambda x: tf.reduce_mean(x, axis=1)),
+    Dense(64, activation='relu'),
+    Dense(vocab_size, activation='softmax')
+])
+
+# Compile model
+model.compile(loss='sparse_categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
+
+# Train model
+history = model.fit(X, Y, epochs=100, verbose=0)
+
+
+# d. Output - Plot and Test
+# Plot loss and accuracy
+plt.plot(history.history['loss'], label='Loss')
+plt.plot(history.history['accuracy'], label='Accuracy')
+plt.title('CBOW Training Progress')
+plt.xlabel('Epoch')
+plt.legend()
+plt.show()
+
+# Test predictions
+test_contexts = [
+    ["continuous", "bag", "words", "is"],
+    ["natural", "language", "technique", "to"]
+]
+
+print("\n--- Predictions ---")
+for context in test_contexts:
+    x_test = np.array([[word_to_index[w] for w in context]])
+    pred = np.argmax(model.predict(x_test, verbose=0))
+    print(f"Context: {' '.join(context)} → Predicted word: '{index_to_word[pred]}'")
