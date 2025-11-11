@@ -6,28 +6,44 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
-(x_train,y_train),(x_test,y_test) = mnist.load_data()
+(x_train, y_train), (x_test, y_test) = mnist.load_data()
 
-x_train = x_train/255
-x_test = x_test/255
+x_train = x_train / 255
+x_test = x_test / 255
+
+
+model = Sequential([
+    Flatten(input_shape=(28, 28)),
+    Dense(128, activation='relu'),
+    Dense(64, activation='relu'),
+    Dense(10, activation='softmax')
+])
+
 
 model.compile(
-    optimizer = 'adam',
-    loss = 'sparse_categorical_crossentropy',
-    metrics = ['accuracy']
+    optimizer='adam',
+    loss='sparse_categorical_crossentropy',
+    metrics=['accuracy']
 )
 
-model.fit(x_train,y_train,epochs = 5,validation_split = 0.1)
 
-test_loss,test_acc = model.evaluate(x_test,y_test)
+model.fit(x_train, y_train, epochs=5, validation_split=0.1)
+
+
+test_loss, test_acc = model.evaluate(x_test, y_test)
 print(f"{test_acc*100:.2f}%")
+
+
 pred = model.predict(x_test[:10])
-pred_labels = np.argmax(pred,axis = 1)
+pred_labels = np.argmax(pred, axis=1)
 actual = y_test[:10]
+
 
 # 1. Create the figure
 plt.figure(figsize=(10, 5))
-# 2. Run the loop to add all your subplotsfor i in range(10):
+
+# 2. Run the loop to add all your subplots
+for i in range(10):
     plt.subplot(2, 5, i + 1)
     plt.imshow(x_test[i], cmap='gray')
     plt.title(f"Pred: {pred_labels[i]}\nActual: {actual[i]}")
