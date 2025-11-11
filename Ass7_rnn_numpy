@@ -1,0 +1,46 @@
+import numpy as np
+
+# Activation function (Sigmoid)
+# It converts input values into range (0, 1)
+def sigmoid(x):
+    return 1 / (1 + np.exp(-x))
+
+
+# Define the size of each layer
+input_layer = 5        # Number of input features at each time step
+hidden_layer = 10      # Number of neurons in the hidden layer
+output_layer = 1       # Number of output neurons
+
+
+# Initialize weight matrices
+a = np.random.randn(hidden_layer, input_layer)     # Weights from input to hidden layer
+b = np.random.randn(hidden_layer, hidden_layer)    # Weights from hidden to hidden (recurrent connection)
+c = np.random.randn(output_layer, hidden_layer)    # Weights from hidden to output layer
+
+# Initialize bias vectors
+bh = np.zeros((hidden_layer, 1))                   # Hidden layer bias
+by = np.zeros((output_layer, 1))                   # Output layer bias
+
+# Initialize the hidden state with zeros
+h = np.zeros((10, 1))                              # Hidden state (initially zero)
+
+
+# Function for one RNN time step
+# Takes current input 'x' and previous hidden state 'h'
+def rnn_step(x, h):
+    # Update hidden state using sigmoid activation
+    h = sigmoid(np.dot(a, x) + np.dot(b, h) + bh)
+    # Compute output (no activation applied here)
+    y = np.dot(c, h) + by
+    return h, y
+
+
+# Create a sequence of 6 time steps (each input is a 5x1 vector)
+x = [np.random.randn(5, 1) for _ in range(6)]
+
+
+# Iterate through the sequence
+# Pass each input through the RNN step function
+for t in range(len(x)):
+    h, y = rnn_step(x[t], h)
+    print(f"Time step {t}, Output: {y}")
