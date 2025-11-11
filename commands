@@ -1,0 +1,16 @@
+unset HISTFILE   history -c
+
+  nmcli connection show
+sudo nmcli connection delete "Wired connection 1"
+  sudo nmcli connection delete "MyWiFi"
+
+
+
+  nmcli radio wifi
+nmcli radio wifi on
+rfkill list
+
+nmcli device
+
+
+
