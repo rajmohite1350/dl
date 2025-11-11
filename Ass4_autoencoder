@@ -1,0 +1,61 @@
+# a. Import required libraries
+import numpy as np
+import matplotlib.pyplot as plt
+from tensorflow.keras.datasets import mnist 
+from tensorflow.keras.models import Model  
+from tensorflow.keras.layers import Dense, Input   
+from tensorflow.keras import regularizers   
+
+# b. Upload / access the dataset
+# Loading MNIST dataset and ignoring labels since autoencoder is unsupervised
+(x_train, _), (x_test, _) = mnist.load_data()
+
+# Normalizing pixel values between 0 and 1
+x_train = x_train.astype("float32") / 255
+x_test = x_test.astype("float32") / 255
+
+# Flattening images from 28x28 to 784 for fully connected layers
+x_train = x_train.reshape((len(x_train), -1))
+x_test = x_test.reshape((len(x_test), -1))
+
+# c. Encoder converts it into latent representation
+input_img = Input(shape=(784,))  # Input layer with 784 features (flattened image)
+encoded = Dense(128, activation="relu", activity_regularizer=regularizers.l1(1e-5))(input_img)  # First encoder layer
+encoded = Dense(64, activation="relu")(encoded)  # Second encoder layer
+latent = Dense(32, activation="sigmoid")(encoded)  # Latent representation (bottleneck)
+
+# d. Decoder networks convert it back to the original input
+decoded = Dense(64, activation="relu")(latent)  # First decoder layer
+decoded = Dense(128, activation="relu")(decoded)  # Second decoder layer
+output_img = Dense(784, activation="sigmoid")(decoded)  # Output layer reconstructing image
+
+# e. Compile the model with Optimizer, Loss, and Evaluation Metrics
+autoencoder = Model(input_img, output_img)  # Combine encoder and decoder
+autoencoder.compile(optimizer="adam", loss="binary_crossentropy")  # Compile model
+
+# Training the Autoencoder model
+history = autoencoder.fit(
+    x_train, x_train,  # Input and output are the same for autoencoders
+    epochs=30,         # Number of epochs
+    batch_size=256,    # Batch size
+    shuffle=True,      # Shuffle data during training
+    validation_data=(x_test, x_test)  # Validation data
+)
+
+# Predict reconstructed images for test samples
+decoded_img = autoencoder.predict(x_test[:10])
+
+# Plot original and reconstructed images for comparison
+plt.figure(figsize=(20, 4))
+for i in range(10):
+    # Display original images
+    ax = plt.subplot(2, 10, i + 1)
+    plt.imshow(x_test[i].reshape(28, 28), cmap="gray")
+    plt.axis('off')
+    
+    # Display reconstructed images
+    ax = plt.subplot(2, 10, i + 1 + 10)
+    plt.imshow(decoded_img[i].reshape(28, 28), cmap="gray")
+    plt.axis('off')
+
+plt.show()
