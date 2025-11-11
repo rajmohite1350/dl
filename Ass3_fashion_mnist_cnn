@@ -1,0 +1,78 @@
+import tensorflow as tf
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Dense, Flatten, Conv2D, MaxPooling2D
+from tensorflow.keras.datasets import fashion_mnist
+import numpy as np
+import matplotlib.pyplot as plt
+
+
+# a. Loading and preprocessing the image data
+(x_train, y_train), (x_test, y_test) = fashion_mnist.load_data()
+
+x_train = x_train.reshape(-1, 28, 28, 1) / 255
+x_test = x_test.reshape(-1, 28, 28, 1) / 255
+
+class_name = ['T-shirt/top', 'Trouser', 'Pullover', 'Dress', 'Coat',
+              'Sandal', 'Shirt', 'Sneaker', 'Bag', 'Ankle boot']
+
+
+# b. Defining the model’s architecture
+model = Sequential([
+    Conv2D(32, (3, 3), activation='relu', input_shape=(28, 28, 1)),
+    MaxPooling2D((2, 2)),
+    Conv2D(64, (3, 3), activation='relu'),
+    MaxPooling2D((2, 2)),
+    Flatten(),
+    Dense(128, activation='relu'),
+    Dense(10, activation='softmax')
+])
+
+
+# c. Compiling and training the model
+model.compile(
+    optimizer='adam',
+    loss='sparse_categorical_crossentropy',
+    metrics=['accuracy']
+)
+
+history = model.fit(
+    x_train,
+    y_train,
+    epochs=5,
+    validation_data=(x_test, y_test),
+    verbose=1
+)
+
+
+# d. Estimating the model’s performance
+test_loss, test_acc = model.evaluate(x_test, y_test)
+print(f"Test Accuracy: {test_acc * 100:.2f}%")
+
+
+# Plot training and validation accuracy
+plt.figure(figsize=(8, 5))
+plt.plot(history.history['accuracy'], label='Training Accuracy')
+plt.plot(history.history['val_accuracy'], label='Validation Accuracy')
+plt.title("Model Accuracy")
+plt.xlabel("Epoch")
+plt.ylabel("Accuracy")
+plt.legend()
+plt.show()
+
+
+# Display predicted vs actual images
+prediction = model.predict(x_test[:10])
+pred_labels = np.argmax(prediction, axis=1)
+actual = y_test[:10]
+
+plt.figure(figsize=(12, 6))
+for i in range(10):
+    plt.subplot(2, 5, i + 1)
+    plt.imshow(x_test[i].reshape(28, 28), cmap='gray')
+    pred_name = class_name[pred_labels[i]]
+    actual_name = class_name[actual[i]]
+    plt.title(f"Pred: {pred_name}\nActual: {actual_name}")
+    plt.axis('off')
+
+plt.tight_layout()
+plt.show()
